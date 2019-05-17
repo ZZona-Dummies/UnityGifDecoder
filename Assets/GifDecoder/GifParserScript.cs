@@ -14,8 +14,12 @@ using UnityEngine;
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
+using System.Diagnostics;
 
-public class GifParserScript : MonoBehaviour 
+using Debug = UnityEngine.Debug;
+
+public class GifParserScript : MonoBehaviour
 {
     private GifData _gifData;
 
@@ -34,6 +38,8 @@ public class GifParserScript : MonoBehaviour
         gifData.globalColorTableSize = BitHelper.getIntFromPackedByte(bytes[10], 5, 8);
         gifData.backgroundColorIndex = bytes[11];
         gifData.pixelAspectRatio = bytes[12];
+
+        //Debug.Log($"Bits per pixel: {gifData.bitsPerPixel}");
 
         if (gifData.globalColorTableFlag)
         {
@@ -55,6 +61,7 @@ public class GifParserScript : MonoBehaviour
 
             colorTable[i] = color;
         }
+        // Debug.Log($"This gif has {size / 3} colors on its color table.");
 
         return colorTable;
     }
@@ -158,7 +165,7 @@ public class GifParserScript : MonoBehaviour
 
     private GifImageData readImageData(GifData gifData, byte[] bytes, int offset)
     {
-        GifImageData imgData = new GifImageData(gifData);
+        GifImageData imgData = new GifImageData(gifData, offset);
         int subblockOffset = offset + 1;
         int subblockCount = 0;
 
@@ -251,6 +258,41 @@ public class GifParserScript : MonoBehaviour
                 }
             }
 
+            //float bgMax = 50f / 255;
+            //var transparent = currentFrame.Where(p => p.a == 0);
+            //var bgMeanSum = currentFrame.Aggregate(new float[8], (curSum, color) =>
+            //{
+            //    curSum[4] += color.a;
+            //    ++curSum[5];
+
+            //    if (color.a > 0)
+            //    {
+            //        curSum[6] += color.a;
+            //        ++curSum[7];
+            //    }
+
+            //    if (color.r >= bgMax || color.g >= bgMax || color.b >= bgMax)
+            //        return curSum; // We are interested on dark colors
+
+            //    curSum[0] += color.r;
+            //    curSum[1] += color.g;
+            //    curSum[2] += color.b;
+            //    ++curSum[3];
+
+            //    return curSum;
+            //});
+
+            //var bgMean = new Color32(
+            //    (byte)(bgMeanSum[0] * 255 / bgMeanSum[3]),
+            //    (byte)(bgMeanSum[1] * 255 / bgMeanSum[3]),
+            //    (byte)(bgMeanSum[2] * 255 / bgMeanSum[3]),
+            //    (byte)(bgMeanSum[4] * 255 / bgMeanSum[5]));
+
+            //Debug.Log(
+            //    $"Frame {i} has transparent colors?: {transparent.Any()} || Count: {transparent.Count()} || Background: {bgMean}" +
+            //    Environment.NewLine +
+            //    $"Solid transparency mean (must be 255): {(byte)(bgMeanSum[6] * 255 / bgMeanSum[7])}");
+
             // Set texture pixels and create sprite
             texture.SetPixels(currentFrame);
             texture.Apply();
@@ -269,10 +311,16 @@ public class GifParserScript : MonoBehaviour
         animatorScript.sprites = sprites;
     }
 
-    void Start()
+    private void Start()
     {
+        var sw = Stopwatch.StartNew();
+
         _gifData = parseGifData(gif.bytes);
 
         createAnimator(_gifData);
+
+        sw.Stop();
+        Debug.Log($"Gif readed in {sw.ElapsedMilliseconds} ms!");
+        Debug.Log(_gifData.ToString());
     }
 }
