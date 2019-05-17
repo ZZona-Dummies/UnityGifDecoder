@@ -23,6 +23,7 @@ public class GifImageData
     private int _currentCodeSize;
     private Dictionary<int, GifColor> _colors;
     private int _curOffset;
+    private HashSet<int> _indices;
 
     public int lzwMinimumCodeSize;
     public int endingOffset;
@@ -37,6 +38,7 @@ public class GifImageData
         _curOffset = curOffset;
         _gifData = gifData;
         _colors = new Dictionary<int, GifColor>(256);
+        _indices = new HashSet<int>();
 
         codeTable = new Dictionary<int, int[]>(4096);
         colorIndices = new List<int>(256);
@@ -54,6 +56,10 @@ public class GifImageData
 
         // Prepare colors
         prepareColors();
+
+        Debug.Log($"Indices length: {_indices.Count}" +
+            Environment.NewLine +
+            $"{string.Join(Environment.NewLine, _indices.Select(i => _colors[i].ToString()))}");
     }
 
     private void translateBlock()
@@ -190,7 +196,10 @@ public class GifImageData
 
         for (int i = 0; i < indices.Length; i++)
         {
-            colorIndices.Add(indices[i]);
+            int index = indices[i];
+            _indices.Add(index);
+
+            colorIndices.Add(index);
         }
     }
 

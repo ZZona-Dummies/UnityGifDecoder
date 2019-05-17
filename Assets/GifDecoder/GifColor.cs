@@ -27,6 +27,7 @@ public struct GifColor
 
     public override string ToString()
     {
-        return "R: " + r + " G: " + g + " B: " + b + " A: " + a;
+        // return "R: " + r + " G: " + g + " B: " + b + " A: " + a;
+        return $"RGBA({r}, {g}, {b}, {a})";
     }
 }
